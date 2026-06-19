@@ -26,17 +26,30 @@ export default function TargetCard({ target }) {
             </div>
           </div>
 
-          {mapsUrl && (
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-blue-600 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 transition-colors"
-            >
-              <ExternalLink className="w-3 h-3" />
-              Map
-            </a>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            {target.redfin_url && (
+              <a
+                href={target.redfin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-red-600 border border-slate-200 hover:border-red-300 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Redfin
+              </a>
+            )}
+            {mapsUrl && (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-blue-600 border border-slate-200 hover:border-blue-300 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Map
+              </a>
+            )}
+          </div>
         </div>
 
         <dl className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -9,9 +9,7 @@ const SORT_OPTIONS = [
 ]
 
 function getLastSoldPrice(comp) {
-  const sold = comp.sale_history?.find(s => s.event?.toLowerCase().includes('sold'))
-  if (!sold?.price) return null
-  return parseFloat(sold.price.replace(/[^0-9.]/g, '')) || null
+  return comp.sale_price ?? null
 }
 
 function sortComps(comps, sortBy) {
@@ -68,7 +66,20 @@ export default function Results({ data }) {
         {sorted.length > 1 && (
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-400">Sort:</span>
-            <div className="flex bg-slate-100 rounded-lg p-0.5">
+
+            {/* Dropdown on mobile */}
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="sm:hidden text-xs font-medium border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {SORT_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+
+            {/* Segmented control on sm+ */}
+            <div className="hidden sm:flex bg-slate-100 rounded-lg p-0.5">
               {SORT_OPTIONS.map(opt => (
                 <button
                   key={opt.value}
