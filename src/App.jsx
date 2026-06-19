@@ -5,7 +5,7 @@ import ErrorState from './components/ErrorState'
 import Results from './components/Results'
 import { Building } from './components/Icons'
 
-const API_URL = 'http://localhost:8000/comparable-sales'
+const API_URL = 'https://propertyscraper-production.up.railway.app/comparable-sales'
 
 export default function App() {
   const [status, setStatus] = useState('idle')
