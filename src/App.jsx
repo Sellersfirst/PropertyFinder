@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
+import { runComparableSales } from './lib/api'
 import SearchForm from './components/SearchForm'
+import SearchHistory from './components/SearchHistory'
 import LoadingState from './components/LoadingState'
 import ErrorState from './components/ErrorState'
 import Results from './components/Results'
 import { Building } from './components/Icons'
 
-const API_URL = 'https://propertyscraper-production.up.railway.app/comparable-sales'
-
 export default function App() {
-  const [status, setStatus] = useState('idle')
-  const [results, setResults] = useState(null)
-  const [errorMsg, setErrorMsg] = useState('')
-  const abortRef = useRef(null)
+  const [status, setStatus]         = useState('idle')
+  const [results, setResults]       = useState(null)
+  const [errorMsg, setErrorMsg]     = useState('')
+  const [searchCount, setSearchCount] = useState(0) // bumped after each save → refreshes history
+  const abortRef  = useRef(null)
   const resultsRef = useRef(null)
 
   useEffect(() => {
@@ -27,27 +28,10 @@ export default function App() {
     abortRef.current = new AbortController()
 
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-        signal: abortRef.current.signal,
-      })
-
-      if (!res.ok) {
-        let msg = `HTTP ${res.status}`
-        try {
-          const err = await res.json()
-          msg = err.detail || err.message || err.error || JSON.stringify(err)
-        } catch {
-          try { msg = await res.text() } catch {}
-        }
-        throw new Error(msg)
-      }
-
-      const data = await res.json()
+      const data = await runComparableSales(body, abortRef.current.signal)
       setResults(data)
       setStatus('success')
+      setSearchCount(c => c + 1) // triggers history refresh
     } catch (err) {
       if (err.name === 'AbortError') {
         setStatus('idle')
@@ -62,6 +46,12 @@ export default function App() {
 
   function handleCancel() {
     abortRef.current?.abort()
+  }
+
+  function handleLoadHistory(data) {
+    setResults(data)
+    setStatus('success')
+    setErrorMsg('')
   }
 
   return (
@@ -93,8 +83,13 @@ export default function App() {
         </div>
 
         {/* Form */}
-        <div className="mb-6">
+        <div className="mb-4">
           <SearchForm onSubmit={handleSubmit} isLoading={status === 'loading'} />
+        </div>
+
+        {/* Search history */}
+        <div className="mb-6">
+          <SearchHistory onLoad={handleLoadHistory} refreshKey={searchCount} />
         </div>
 
         {/* Scroll anchor */}
