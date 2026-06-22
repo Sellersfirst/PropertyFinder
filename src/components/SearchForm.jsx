@@ -5,10 +5,10 @@ const FILTER_GROUPS = [
   {
     label: 'Search Settings',
     fields: [
-      { id: 'radius_miles',        label: 'Radius',         unit: 'miles',  type: 'float', placeholder: '2.0' },
-      { id: 'max_comparables',     label: 'Max results',    unit: null,     type: 'int',   placeholder: '10'  },
-      { id: 'lookback_years',      label: 'Lookback',       unit: 'years',  type: 'float', placeholder: '1–3' },
-      { id: 'max_sale_gap_months', label: 'Max sale gap',   unit: 'months', type: 'float', placeholder: 'any' },
+      { id: 'radius_miles',        label: 'Radius',         unit: 'miles',  type: 'float', placeholder: '2.0', default: 3    },
+      { id: 'max_comparables',     label: 'Max results',    unit: null,     type: 'int',   placeholder: '10',  default: 10   },
+      { id: 'lookback_years',      label: 'Lookback',       unit: 'years',  type: 'float', placeholder: '1–3', default: 3    },
+      { id: 'max_sale_gap_months', label: 'Max sale gap',   unit: 'months', type: 'float', placeholder: 'any', default: 24   },
     ],
   },
   {
@@ -51,15 +51,20 @@ export default function SearchForm({ onSubmit, isLoading }) {
   const [address, setAddress] = useState('')
   const [redfinUrl, setRedfinUrl] = useState('')
   const [filters, setFilters] = useState(
-    Object.fromEntries(ALL_FIELDS.map(f => [f.id, '']))
+    Object.fromEntries(ALL_FIELDS.map(f => [f.id, f.default != null ? String(f.default) : '']))
   )
   const [inputError, setInputError] = useState('')
   const [filtersOpen, setFiltersOpen] = useState(false)
 
-  const activeFilters = Object.values(filters).filter(v => v !== '').length
+  const activeFilters = ALL_FIELDS.filter(f => {
+    const v = filters[f.id]
+    if (v === '') return false
+    if (f.default != null && String(f.default) === v) return false
+    return true
+  }).length
 
   function clearFilters() {
-    setFilters(Object.fromEntries(ALL_FIELDS.map(f => [f.id, ''])))
+    setFilters(Object.fromEntries(ALL_FIELDS.map(f => [f.id, f.default != null ? String(f.default) : ''])))
   }
 
   function handleSubmit(e) {

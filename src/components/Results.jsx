@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import TargetCard from './TargetCard'
-import ComparableCard from './ComparableCard'
+import ComparableTable from './ComparableTable'
 
 const SORT_OPTIONS = [
   { value: 'distance', label: 'Closest first' },
@@ -98,18 +98,7 @@ export default function Results({ data }) {
         )}
       </div>
 
-      {sorted.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-10 text-center">
-          <p className="text-slate-400 text-sm">No comparables found matching the given criteria.</p>
-          <p className="text-slate-400 text-xs mt-1">Try widening the radius or adjusting filters.</p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {sorted.map((comp, i) => (
-            <ComparableCard key={comp.redfin_url || i} comp={comp} rank={i + 1} />
-          ))}
-        </div>
-      )}
+      <ComparableTable comparables={sorted} />
     </div>
   )
 }
