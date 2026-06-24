@@ -1,14 +1,34 @@
 import { useState } from 'react'
 import { Search, SlidersH, ChevronRight, X } from './Icons'
 
+const SOLD_WITHIN_OPTIONS = [
+  { value: 'sold-1wk', label: 'Last 1 week'   },
+  { value: 'sold-1mo', label: 'Last 1 month'  },
+  { value: 'sold-3mo', label: 'Last 3 months' },
+  { value: 'sold-6mo', label: 'Last 6 months' },
+  { value: 'sold-1yr', label: 'Last 1 year'   },
+  { value: 'sold-2yr', label: 'Last 2 years'  },
+  { value: 'sold-3yr', label: 'Last 3 years'  },
+  { value: 'sold-5yr', label: 'Last 5 years'  },
+]
+
 const FILTER_GROUPS = [
   {
     label: 'Search Settings',
     fields: [
-      { id: 'radius_miles',        label: 'Radius',         unit: 'miles',  type: 'float', placeholder: '2.0', default: 3    },
-      { id: 'max_comparables',     label: 'Max results',    unit: null,     type: 'int',   placeholder: '10',  default: 10   },
-      { id: 'lookback_years',      label: 'Lookback',       unit: 'years',  type: 'float', placeholder: '1–3', default: 3    },
-      { id: 'max_sale_gap_months', label: 'Max sale gap',   unit: 'months', type: 'float', placeholder: 'any', default: 24   },
+      { id: 'radius_miles',        label: 'Radius',         unit: 'miles',  type: 'float',  placeholder: '2.0', default: 3         },
+      { id: 'max_comparables',     label: 'Max results',    unit: null,     type: 'int',    placeholder: '10',  default: 10        },
+      {
+        id: 'sold_within',
+        label: 'Sold within',
+        unit: null,
+        type: 'select',
+        default: 'sold-3yr',
+        className: 'col-span-2',
+        options: SOLD_WITHIN_OPTIONS,
+      },
+      { id: 'lookback_years',      label: 'Lookback',       unit: 'years',  type: 'float',  placeholder: '1–3', default: 3         },
+      { id: 'max_sale_gap_months', label: 'Max sale gap',   unit: 'months', type: 'float',  placeholder: 'any', default: 24        },
     ],
   },
   {
@@ -41,16 +61,17 @@ const FILTER_GROUPS = [
 const ALL_FIELDS = FILTER_GROUPS.flatMap(g => g.fields)
 
 function parseVal(raw, type) {
-  if (raw === '') return undefined
+  if (raw === '' || raw == null) return undefined
+  if (type === 'select') return raw
   const v = type === 'int' ? parseInt(raw, 10) : parseFloat(raw)
   return isNaN(v) ? undefined : v
 }
 
 export default function SearchForm({ onSubmit, isLoading }) {
-  const [mode, setMode] = useState('address')
-  const [address, setAddress] = useState('')
+  const [mode, setMode]           = useState('address')
+  const [address, setAddress]     = useState('')
   const [redfinUrl, setRedfinUrl] = useState('')
-  const [filters, setFilters] = useState(
+  const [filters, setFilters]     = useState(
     Object.fromEntries(ALL_FIELDS.map(f => [f.id, f.default != null ? String(f.default) : '']))
   )
   const [inputError, setInputError] = useState('')
@@ -113,7 +134,7 @@ export default function SearchForm({ onSubmit, isLoading }) {
             ))}
           </div>
 
-          {/* Primary input with icon */}
+          {/* Primary input */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
               <Search className="w-4 h-4 text-slate-400" />
@@ -149,7 +170,7 @@ export default function SearchForm({ onSubmit, isLoading }) {
           )}
         </div>
 
-        {/* Filters toggle bar */}
+        {/* Filters toggle */}
         <div className="border-t border-slate-100">
           <button
             type="button"
@@ -168,28 +189,42 @@ export default function SearchForm({ onSubmit, isLoading }) {
             <ChevronRight className={`w-4 h-4 text-slate-400 transition-transform ${filtersOpen ? 'rotate-90' : ''}`} />
           </button>
 
-          {/* Filter panel */}
           {filtersOpen && (
             <div className="border-t border-slate-100 bg-slate-50 px-5 py-4 space-y-5">
               {FILTER_GROUPS.map(group => (
                 <div key={group.label}>
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">{group.label}</p>
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2.5">
+                    {group.label}
+                  </p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {group.fields.map(({ id, label, unit, type, placeholder }) => (
-                      <div key={id}>
+                    {group.fields.map(field => (
+                      <div key={field.id} className={field.className ?? ''}>
                         <label className="block text-xs font-medium text-slate-600 mb-1">
-                          {label}
-                          {unit && <span className="text-slate-400 ml-1">({unit})</span>}
+                          {field.label}
+                          {field.unit && <span className="text-slate-400 ml-1">({field.unit})</span>}
                         </label>
-                        <input
-                          type="number"
-                          value={filters[id]}
-                          onChange={e => setFilters(prev => ({ ...prev, [id]: e.target.value }))}
-                          step={type === 'float' ? '0.1' : '1'}
-                          min="0"
-                          placeholder={placeholder}
-                          className="w-full border border-slate-200 bg-white rounded-lg px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        />
+
+                        {field.type === 'select' ? (
+                          <select
+                            value={filters[field.id]}
+                            onChange={e => setFilters(prev => ({ ...prev, [field.id]: e.target.value }))}
+                            className="w-full border border-slate-200 bg-white rounded-lg px-2.5 py-1.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          >
+                            {field.options.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            type="number"
+                            value={filters[field.id]}
+                            onChange={e => setFilters(prev => ({ ...prev, [field.id]: e.target.value }))}
+                            step={field.type === 'float' ? '0.1' : '1'}
+                            min="0"
+                            placeholder={field.placeholder}
+                            className="w-full border border-slate-200 bg-white rounded-lg px-2.5 py-1.5 text-sm text-slate-900 placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        )}
                       </div>
                     ))}
                   </div>
@@ -210,7 +245,7 @@ export default function SearchForm({ onSubmit, isLoading }) {
           )}
         </div>
 
-        {/* Submit bar */}
+        {/* Submit */}
         <div className="border-t border-slate-100 px-5 py-4">
           <button
             type="submit"
