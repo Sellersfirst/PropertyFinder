@@ -1,12 +1,13 @@
-export const BASE_URL = 'https://propertyscraper-production.up.railway.app'
+export const BASE_URL = 'http://localhost:8000'
 
-export async function runComparableSales(body, signal) {
-  const res = await fetch(`${BASE_URL}/comparable-sales`, {
+export async function streamComparableSales(body, signal, onEvent) {
+  const res = await fetch(`${BASE_URL}/comparable-sales/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
     signal,
   })
+
   if (!res.ok) {
     let msg = `HTTP ${res.status}`
     try {
@@ -17,7 +18,32 @@ export async function runComparableSales(body, signal) {
     }
     throw new Error(msg)
   }
-  return res.json()
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let gotTerminal = false
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      for (const line of decoder.decode(value).split('\n')) {
+        if (!line.startsWith('data: ')) continue
+        try {
+          const event = JSON.parse(line.slice(6))
+          if (event.type === 'complete' || event.type === 'error') gotTerminal = true
+          onEvent(event)
+        } catch {}
+      }
+    }
+  } finally {
+    reader.cancel().catch(() => {})
+  }
+
+  if (!gotTerminal && !signal?.aborted) {
+    throw new Error('Stream ended unexpectedly without a result.')
+  }
 }
 
 export async function listSearches(limit = 10, offset = 0) {

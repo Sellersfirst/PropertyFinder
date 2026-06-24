@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { runComparableSales } from './lib/api'
+import { streamComparableSales } from './lib/api'
 import SearchForm from './components/SearchForm'
 import SearchHistory from './components/SearchHistory'
 import LoadingState from './components/LoadingState'
@@ -8,11 +8,12 @@ import Results from './components/Results'
 import { Building } from './components/Icons'
 
 export default function App() {
-  const [status, setStatus]         = useState('idle')
-  const [results, setResults]       = useState(null)
-  const [errorMsg, setErrorMsg]     = useState('')
-  const [searchCount, setSearchCount] = useState(0) // bumped after each save → refreshes history
-  const abortRef  = useRef(null)
+  const [status, setStatus]           = useState('idle')
+  const [results, setResults]         = useState(null)
+  const [errorMsg, setErrorMsg]       = useState('')
+  const [streamEvent, setStreamEvent] = useState(null)
+  const [searchCount, setSearchCount] = useState(0)
+  const abortRef   = useRef(null)
   const resultsRef = useRef(null)
 
   useEffect(() => {
@@ -25,19 +26,34 @@ export default function App() {
     setStatus('loading')
     setResults(null)
     setErrorMsg('')
+    setStreamEvent(null)
     abortRef.current = new AbortController()
 
     try {
-      const data = await runComparableSales(body, abortRef.current.signal)
-      setResults(data)
-      setStatus('success')
-      setSearchCount(c => c + 1) // triggers history refresh
+      await streamComparableSales(body, abortRef.current.signal, (event) => {
+        if (event.type === 'complete') {
+          setResults(event.data)
+          setStatus('success')
+          setSearchCount(c => c + 1)
+        } else if (event.type === 'error') {
+          setErrorMsg(event.message || 'An error occurred.')
+          setStatus('error')
+        } else {
+          setStreamEvent(event)
+        }
+      })
     } catch (err) {
       if (err.name === 'AbortError') {
         setStatus('idle')
       } else {
-        setErrorMsg(err.message || 'An unknown error occurred.')
-        setStatus('error')
+        // Only set error if status hasn't already been set by a stream event
+        setStatus(s => {
+          if (s === 'loading') {
+            setErrorMsg(err.message || 'An unknown error occurred.')
+            return 'error'
+          }
+          return s
+        })
       }
     } finally {
       abortRef.current = null
@@ -52,6 +68,7 @@ export default function App() {
     setResults(data)
     setStatus('success')
     setErrorMsg('')
+    setStreamEvent(null)
   }
 
   return (
@@ -72,44 +89,35 @@ export default function App() {
 
       <div className="max-w-4xl mx-auto px-4 py-8">
 
-        {/* Hero */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            Find Comparable Sales
-          </h1>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Find Comparable Sales</h1>
           <p className="mt-2 text-slate-500 text-sm max-w-md mx-auto">
             Enter a property address or Redfin URL to discover recent comparable sales in the area.
           </p>
         </div>
 
-        {/* Form */}
         <div className="mb-4">
           <SearchForm onSubmit={handleSubmit} isLoading={status === 'loading'} />
         </div>
 
-        {/* Search history */}
         <div className="mb-6">
           <SearchHistory onLoad={handleLoadHistory} refreshKey={searchCount} />
         </div>
 
-        {/* Scroll anchor */}
         <div ref={resultsRef} />
 
-        {/* Loading */}
         {status === 'loading' && (
           <div className="mb-6">
-            <LoadingState onCancel={handleCancel} />
+            <LoadingState onCancel={handleCancel} event={streamEvent} />
           </div>
         )}
 
-        {/* Error */}
         {status === 'error' && (
           <div className="mb-6">
             <ErrorState message={errorMsg} onRetry={() => setStatus('idle')} />
           </div>
         )}
 
-        {/* Results */}
         {status === 'success' && results && (
           <Results data={results} />
         )}
