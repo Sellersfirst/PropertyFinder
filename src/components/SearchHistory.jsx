@@ -154,16 +154,17 @@ export default function SearchHistory({ onLoad, refreshKey }) {
                 const isDeletingThis = deletingId === id
 
                 return (
-                  <li key={id}>
+                  <li key={id} className="flex items-center gap-1 px-3 py-0.5 hover:bg-slate-50 transition-colors">
+
+                    {/* Load button — takes up most of the row */}
                     <button
                       onClick={() => handleLoad(id)}
                       disabled={!!loadingId || !!deletingId}
-                      className="w-full flex items-center gap-3 px-5 py-3.5 text-left hover:bg-slate-50 transition-colors group disabled:opacity-60"
+                      className="flex-1 flex items-center gap-3 px-2 py-3 text-left min-w-0 disabled:opacity-60"
                     >
-                      {/* Address + meta */}
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-800 truncate">{address}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="text-xs text-slate-400">{relativeTime(item.scraped_at)}</span>
                           {compCount != null && (
                             <>
@@ -180,25 +181,23 @@ export default function SearchHistory({ onLoad, refreshKey }) {
                         </div>
                       </div>
 
-                      {/* Load indicator or arrow */}
-                      {isLoadingThis ? (
-                        <div className="w-4 h-4 rounded-full border-2 border-slate-200 border-t-blue-500 animate-spin shrink-0" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
-                      )}
+                      {isLoadingThis
+                        ? <div className="w-4 h-4 rounded-full border-2 border-slate-200 border-t-blue-500 animate-spin shrink-0" />
+                        : <ChevronRight className="w-4 h-4 text-slate-300 shrink-0" />
+                      }
+                    </button>
 
-                      {/* Delete button */}
-                      <button
-                        onClick={e => handleDelete(e, id)}
-                        disabled={!!loadingId || !!deletingId}
-                        className="shrink-0 w-6 h-6 flex items-center justify-center rounded-md text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
-                        title="Delete"
-                      >
-                        {isDeletingThis
-                          ? <div className="w-3 h-3 rounded-full border border-red-400 border-t-transparent animate-spin" />
-                          : <X className="w-3.5 h-3.5" />
-                        }
-                      </button>
+                    {/* Delete button — always visible */}
+                    <button
+                      onClick={e => handleDelete(e, id)}
+                      disabled={!!loadingId || !!deletingId}
+                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+                      title="Delete search"
+                    >
+                      {isDeletingThis
+                        ? <div className="w-3 h-3 rounded-full border border-red-400 border-t-transparent animate-spin" />
+                        : <X className="w-3.5 h-3.5" />
+                      }
                     </button>
                   </li>
                 )

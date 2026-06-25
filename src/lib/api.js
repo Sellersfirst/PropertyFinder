@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://localhost:8000'
+export const BASE_URL = 'https://propertyscraper-production.up.railway.app'
 
 export async function streamComparableSales(body, signal, onEvent) {
   const res = await fetch(`${BASE_URL}/comparable-sales/stream`, {
@@ -21,6 +21,7 @@ export async function streamComparableSales(body, signal, onEvent) {
 
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
+  let buffer = ''
   let gotTerminal = false
 
   try {
@@ -28,7 +29,11 @@ export async function streamComparableSales(body, signal, onEvent) {
       const { done, value } = await reader.read()
       if (done) break
 
-      for (const line of decoder.decode(value).split('\n')) {
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() // hold incomplete trailing line for next chunk
+
+      for (const line of lines) {
         if (!line.startsWith('data: ')) continue
         try {
           const event = JSON.parse(line.slice(6))
