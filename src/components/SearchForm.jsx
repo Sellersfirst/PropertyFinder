@@ -16,7 +16,7 @@ const FILTER_GROUPS = [
   {
     label: 'Search Settings',
     fields: [
-      { id: 'radius_miles',        label: 'Radius',         unit: 'miles',  type: 'float',  placeholder: '2.0', default: 3         },
+      { id: 'radius_miles',        label: 'Radius',         unit: 'miles',  type: 'float',  placeholder: '1.5', default: 1.5       },
       { id: 'max_comparables',     label: 'Max results',    unit: null,     type: 'int',    placeholder: '10',  default: 10        },
       {
         id: 'sold_within',

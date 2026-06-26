@@ -87,6 +87,7 @@ export default function App() {
         </div>
       </header>
 
+      {/* Narrow section: hero + form + history + loading/error */}
       <div className="max-w-4xl mx-auto px-4 py-8">
 
         <div className="mb-8 text-center">
@@ -118,11 +119,14 @@ export default function App() {
           </div>
         )}
 
-        {status === 'success' && results && (
-          <Results data={results} />
-        )}
-
       </div>
+
+      {/* Wide section: results table */}
+      {status === 'success' && results && (
+        <div className="px-4 pb-10">
+          <Results data={results} />
+        </div>
+      )}
     </div>
   )
 }
